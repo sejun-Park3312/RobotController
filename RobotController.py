@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 ## <<Before Starting, Open Gazebo>>
 ## <<Copy and Paste the Following Commands into Terminal!!>>
 ## ---------------------------------------------
@@ -41,7 +39,7 @@ from dsr_msgs.srv import GetCurrentPose, SetCurrentTcp, ConfigCreateTcp, GetCurr
 
 
 class RobotController:
-    def __init__(self, modelName="a0509"):
+    def __init__(self, modelName="a0509_custom"):
         self.Running = False
         self.lock = threading.Lock()
         self.SamplingTime = 100/1000
@@ -63,24 +61,35 @@ class RobotController:
         self.InitPose = [210.5/1000, 42/1000, 358.0/1000]
 
 
+
     def Ready(self):
         # Model Name
-        modelName = self.modelName
+        modelName = self.launch_model
+        print("Preprocessing...")
+        print("---------------------------")
+        print("")
 
-        # Preprocessing
+        # ROS
+        print("Wait for ROS Service...")
         rospy.init_node('Sejun_RobotController', anonymous=True)
         rospy.wait_for_service('/dsr01' + modelName + '/motion/move_home')
         rospy.wait_for_service('/dsr01' + modelName + '/motion/move_joint')
+        print("Ros Service is Ready!")
+        print("")
 
-        # Functions
+        # Doosan API Handle
+        print("Define Doosan API Messages...")
         self.Function_MoveHome = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_home', MoveHome)
         self.Function_MoveWait = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_wait', MoveWait)
         self.Function_MoveLine = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_line', MoveLine)
         self.Function_MoveJoint = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_joint', MoveJoint)
         self.Function_GetPose = rospy.ServiceProxy('/dsr01' + modelName + '/system/get_current_pose', GetCurrentPose)
+        print("Doosan API Messages Defined!")
+        print("")
 
-        self.Running = True
-        print("Ready!")
+        print("---------------------------")
+        print("Preprocessing Done!")
+        print("")
         print("")
 
 
@@ -92,9 +101,9 @@ class RobotController:
         print("Emulator Opened!")
         print("")
 
-        Gazebo_Msg = "cd ~/catkin_ws \ source devel/setup.bash \ roslaunch dsr_launcher SJ_Custom.launch model:=" + self.modelName
+        Gazebo_Msg = "cd ~/catkin_ws ; source devel/setup.bash ; roslaunch dsr_launcher SJ_Custom.launch model:=" + self.modelName
         print("Opening Gazebo Simulator...")
-        subprocess.Popen(['gnome-terminal','--title=Gazebo','--','bash', '-c', Gazebo_Msg])
+        subprocess.Popen(['gnome-terminal','--title=Gazebo','--','bash', '-c', Gazebo_Msg + "; exec bash"])
         print("Gazebo Opened!")
         print("")
         print("")

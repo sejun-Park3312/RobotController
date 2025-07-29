@@ -10,3 +10,6 @@
         (1) /opt/ros/noetic/lib/python3/dist-packages (ros packages 경로추가)
         (2) /home/msrl/catkin_ws/devel/lib/python3/dist-packages (doosan msg 추가)
     추가하면 파이참 우측 Project 아래에 추가한 dist-packages 두개가 보일것 이제 스크립트, 터미널에서 rospy, dsr_msg 사용가능
+
+
+3. dsr_msg 사용가능하니 pdf보고 dsr_msg(doosan API Handle) 쓰면됨
