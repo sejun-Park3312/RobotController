@@ -3,10 +3,9 @@ import subprocess
 import time
 
 class GazeboSimulator:
-    def __init__(self, RealMode = False):
-        self.RealMode = RealMode
-        self.launcher_model = "a0509_custom"
-        self.launcher_name = "SJ_Custom"
+    def __init__(self):
+        self.launcher_model = "a0509_custom" # or a0509/a0509_custom/a0509_Calibration
+        self.launcher_name = "SJ_Custom" # or single_robot_gazebo/SJ_Custom
 
         # Virtual Mode
         self.EmulatorModel = "a0509"
@@ -14,12 +13,12 @@ class GazeboSimulator:
         # Real Mode
         self.host = "192.168.0.181" # 실제 로봇의 IP주소
         self.port = "12345"
-        self.IP_Device = None
+        self.LAN_Name = "enp68s0" # or enx00e04f82fbd0/enp68s0
 
 
 
     def VirtualMode(self):
-        print("Opening Simulator...")
+        print("Preparing Virtual Mode")
         print("---------------------------")
         print("")
 
@@ -52,17 +51,30 @@ class GazeboSimulator:
         print("")
 
         print("---------------------------")
-        print("Simulator Opened!")
+        print("Virtual Mode Ready!")
         print("")
         print("")
 
 
 
+    def RealMode(self):
+        print("Preparing Virtual Mode")
+        print("---------------------------")
+        print("")
 
+        # Open Gazebo
+        print("Opening Gazebo...")
+        Gazebo_Msg = ("cd ~/catkin_ws; "
+                      " source devel/setup.bash; "
+                      " roslaunch dsr_launcher " + self.launcher_name + ".launch model:=" + self.launcher_model + " mode:=real host:=" + self.host + " port:=" + self.port)
+        subprocess.Popen(['gnome-terminal','--','bash', '-c', Gazebo_Msg + '; exec bash'])
+        print("Gazebo Opened!")
+        print("")
 
-
-
-
+        print("---------------------------")
+        print("Real Mode Ready!")
+        print("")
+        print("")
 
 
 
@@ -98,7 +110,7 @@ class GazeboSimulator:
     ## ---------------------------------------------
 
         ## <<Connect LAN>>
-            # ip addr show
+            # ip addr show (보통 enp(유선)/enx(어댑터)로 시작한다함)
             # sudo ip addr add 192.168.0.100/24 dev enx00e04f82fbd0
             # sudo ip link set enx00e04f82fbd0 up
             # ping 192.168.0.181
