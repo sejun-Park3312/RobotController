@@ -1,0 +1,12 @@
+<<시작하기 전에 rospy, dsr_msg등을 사용하기 위해서 경로지정을 해주어야함!!>>
+
+
+1. 우측 상단 메뉴 확장 후 File => Settings... => Project: RobotController(이 프로젝트 이름임) => Python Interpreter에
+    Python Interpreter: "pyhon 3.8 /usr/bin/python3" 추가하기
+
+
+2. 똑같이 settings... => Projects: RobotController => Project Structure에 들어가서 경로 추가해줌
+    팝업창 우측에 + Add Current Root에서 검색해서 찾으라
+        (1) /opt/ros/noetic/lib/python3/dist-packages (ros packages 경로추가)
+        (2) /home/msrl/catkin_ws/devel/lib/python3/dist-packages (doosan msg 추가)
+    추가하면 파이참 우측 Project 아래에 추가한 dist-packages 두개가 보일것 이제 스크립트, 터미널에서 rospy, dsr_msg 사용가능
