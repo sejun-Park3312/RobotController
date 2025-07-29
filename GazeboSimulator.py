@@ -5,8 +5,8 @@ import time
 class GazeboSimulator:
     def __init__(self, RealMode = False):
         self.RealMode = RealMode
-        self.launch_model = "a0509_custom"
-        self.launch_name = "SJ_Custom"
+        self.launcher_model = "a0509_custom"
+        self.launcher_name = "SJ_Custom"
 
         # Virtual Mode
         self.EmulatorModel = "a0509"
@@ -46,7 +46,7 @@ class GazeboSimulator:
         print("Opening Gazebo...")
         Gazebo_Msg = ("cd ~/catkin_ws; "
                       " source devel/setup.bash; "
-                      " roslaunch dsr_launcher " + self.launch_name + ".launch model:=" + self.launch_model)
+                      " roslaunch dsr_launcher " + self.launcher_name + ".launch model:=" + self.launcher_model)
         subprocess.Popen(['gnome-terminal','--','bash', '-c', Gazebo_Msg + '; exec bash'])
         print("Gazebo Opened!")
         print("")

@@ -1,37 +1,5 @@
 #!/usr/bin/env python3
 
-## <<Before Starting, Open Gazebo>>
-## <<Copy and Paste the Following Commands into Terminal!!>>
-## ---------------------------------------------
-
-# cd ~/catkin_ws
-#  source devel/setup.bash
-
-#  에뮬레이터 모델 지정하기
-#  docker run -it --rm \
-#   --name dsr01_emulator \
-#   -e ROBOT_ID=dsr01 \
-#   -e ROBOT_MODEL=a0509 \
-#   -p 12345:12345 \
-#   doosanrobot/dsr_emulator:3.0.1
-
-# roslaunch dsr_launcher single_robot_gazebo.launch model:=a0509
-# roslaunch dsr_launcher SJ_Custom.launch model:=a0509_custom mode:=virtual
-# roslaunch dsr_launcher SJ_Custom.launch model:=a0509_Calibration mode:=real host:=192.168.0.181 port:=12345
-## ---------------------------------------------
-
-## <<Connection LAN>>
-# sudo ip addr add 192.168.0.100/24 dev enx00e04f82fbd0
-# sudo ip link set enx00e04f82fbd0 up
-# ping 192.168.0.181
-## ---------------------------------------------
-
-## <<Console Control>>
-## <<Copy and Paste the Following Commands into "New" Terminal!!>>
-## ---------------------------------------------
-# python3 RobotController.py
-## ---------------------------------------------
-print("my name is RobotController")
 import rospy
 import threading
 import subprocess
@@ -41,11 +9,11 @@ from dsr_msgs.srv import GetCurrentPose, SetCurrentTcp, ConfigCreateTcp, GetCurr
 
 
 class RobotController:
-    def __init__(self, modelName="a0509_custom"):
+    def __init__(self):
         self.Running = False
         self.lock = threading.Lock()
         self.SamplingTime = 100/1000
-        self.modelName = modelName
+        self.launcher_model = "a0509_custom"
         self.TCP_Offset = [0,-34.5,-397.5,0,0,0]
 
         self.Function_MoveWait = None
@@ -59,13 +27,13 @@ class RobotController:
 
         self.Velocity = [50, 20]
         self.Acceleration = [30, 20]
-        self.InitJoint = [11.9, 4.15, 112.47, 0, 63.38, 11.9]
-        self.InitPose = [210.5/1000, 42/1000, 358.0/1000]
+        self.InitJoint = [11.859779357910156, -0.6888203024864197, 99.6191177368164, -1.7431619358347097e-15, 81.0697021484375, 11.859779357910159]
+        self.InitPose = [350/1000, 73.5/1000, 383.5/1000, 0]
 
 
     def Ready(self):
         # Model Name
-        modelName = self.modelName
+        modelName = self.launcher_model
 
         # Preprocessing
         rospy.init_node('Sejun_RobotController', anonymous=True)
@@ -82,35 +50,6 @@ class RobotController:
         self.Running = True
         print("Ready!")
         print("")
-
-
-    def OpenGazeboSimulation(self):
-        # Open Emulator(Choose Right Robot Model DRCF!!)
-        Docker_Msg = "docker run -it --rm \ --name dsr01_emulator \ -e ROBOT_ID=dsr01 \ -e ROBOT_MODEL=a0509 \ -p 12345:12345 \ doosanrobot/dsr_emulator:3.0.1"
-        print("Opening Docker Emulator...")
-        subprocess.Popen(['bash', '-c', Docker_Msg])
-        print("Emulator Opened!")
-        print("")
-
-        Gazebo_Msg = "cd ~/catkin_ws \ source devel/setup.bash \ roslaunch dsr_launcher SJ_Custom.launch model:=" + self.modelName
-        print("Opening Gazebo Simulator...")
-        subprocess.Popen(['gnome-terminal','--title=Gazebo','--','bash', '-c', Gazebo_Msg])
-        print("Gazebo Opened!")
-        print("")
-        print("")
-
-
-
-    def ConnectIP(self, Device):
-        # Find IP Device Name
-        ConnectIP_Msg = "sudo ip addr add 192.168.0.100/24 dev" + Device + "\ sudo ip link set enx00e04f82fbd0 up \ ping 192.168.0.181"
-
-
-
-    def ConnectRealRobot(self):
-        # Real Robot
-        RealRobot_Msg = "cd ~/catkin_ws \ source devel/setup.bash \ roslaunch dsr_launcher SJ_Custom.launch model:=" + self.modelName
-
 
 
     def Move_Home(self):
@@ -237,11 +176,11 @@ class RobotController:
 
 
     def SetTCP(self):
-        CreatTCP = rospy.ServiceProxy('/dsr01' + self.modelName + '/tcp/config_create_tcp', ConfigCreateTcp)
+        CreatTCP = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/tcp/config_create_tcp', ConfigCreateTcp)
         Result1 = CreatTCP(name="SJ_TCP", pos=self.TCP_Offset)
-        SetTCP = rospy.ServiceProxy('/dsr01' + self.modelName + '/tcp/set_current_tcp', SetCurrentTcp)
+        SetTCP = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/tcp/set_current_tcp', SetCurrentTcp)
         Result2 = SetTCP(name="SJ_TCP")
-        GetTCP = rospy.ServiceProxy('/dsr01' + self.modelName + '/tcp/get_current_tcp', GetCurrentTcp)
+        GetTCP = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/tcp/get_current_tcp', GetCurrentTcp)
         Result3 = GetTCP()
         if Result1.success == True and Result2.success == True:
             print("TCP Setting Done!")
@@ -254,7 +193,7 @@ class RobotController:
 
 
     def DeletTCP(self):
-        DeletTCP = rospy.ServiceProxy('/dsr01' + self.modelName + '/tcp/config_delete_tcp', ConfigDeleteTcp)
+        DeletTCP = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/tcp/config_delete_tcp', ConfigDeleteTcp)
         Result = DeletTCP(name="SJ_TCP")
         if Result.success == True:
             print("TCP Deleting Done!")
@@ -265,7 +204,7 @@ class RobotController:
 
 
     def Fkin(self, q):
-        Function_Fkin = rospy.ServiceProxy('/dsr01' + self.modelName + '/motion/fkin', Fkin)
+        Function_Fkin = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/motion/fkin', Fkin)
         Result = Function_Fkin(pos=q, ref=2)
         Pose = Result.conv_posx
         return Pose
@@ -273,7 +212,6 @@ class RobotController:
 
     def EndController(self):
         self.Running = False
-
 
 
 if __name__ == "__main__":
@@ -300,4 +238,3 @@ if __name__ == "__main__":
     code.interact(banner=banner, local=locals_dict)
 
     RC.EndController()
-rospy.get_param_names()
