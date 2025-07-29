@@ -1,9 +1,6 @@
 import rospy
 import subprocess
-import code
-from dsr_msgs.srv import MoveLine, MoveJoint, MoveHome, MoveWait, Fkin, Ikin
-from dsr_msgs.srv import GetCurrentPose, SetCurrentTcp, ConfigCreateTcp, GetCurrentTcp, ConfigDeleteTcp
-
+import time
 
 class GazeboSimulator:
     def __init__(self, RealMode = False):
@@ -40,7 +37,8 @@ class GazeboSimulator:
             "-p 12345:12345 "
             "doosanrobot/dsr_emulator:3.0.1"
         )
-        subprocess.Popen(['gnome-terminal', '--title=Docker Emulator', '--', 'bash', '-c', Docker_Msg + '; exec bash'])
+        subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', Docker_Msg + '; exec bash'])
+        time.sleep(5)
         print("Emulator Opened!")
         print("")
 
@@ -49,7 +47,7 @@ class GazeboSimulator:
         Gazebo_Msg = ("cd ~/catkin_ws; "
                       " source devel/setup.bash; "
                       " roslaunch dsr_launcher " + self.launch_name + ".launch model:=" + self.launch_model)
-        subprocess.Popen(['gnome-terminal','--','bash', '-c', Gazebo_Msg])
+        subprocess.Popen(['gnome-terminal','--','bash', '-c', Gazebo_Msg + '; exec bash'])
         print("Gazebo Opened!")
         print("")
 
@@ -94,8 +92,6 @@ class GazeboSimulator:
             # roslaunch dsr_launcher SJ_Custom.launch model:=a0509_custom
 
     ## ---------------------------------------------
-
-
 
 
     ### <<<Real Mode>>>
