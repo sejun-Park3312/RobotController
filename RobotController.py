@@ -2,10 +2,13 @@
 
 import rospy
 import threading
-import subprocess
+import numpy as np
 import code
+from std_msgs.msg import Float64MultiArray, MultiArrayDimension
 from dsr_msgs.srv import MoveLine, MoveJoint, MoveHome, MoveWait, Fkin, Ikin
+from dsr_msgs.srv import MoveSplineTask, MoveSplineTaskRequest
 from dsr_msgs.srv import GetCurrentPose, SetCurrentTcp, ConfigCreateTcp, GetCurrentTcp, ConfigDeleteTcp
+from SplineTrajectory import SplineTrajectory
 
 
 class RobotController:
@@ -45,7 +48,9 @@ class RobotController:
         self.Function_MoveWait = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_wait', MoveWait)
         self.Function_MoveLine = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_line', MoveLine)
         self.Function_MoveJoint = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_joint', MoveJoint)
+        self.Function_MoveSpline = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_spline_task', MoveSplineTask)
         self.Function_GetPose = rospy.ServiceProxy('/dsr01' + modelName + '/system/get_current_pose', GetCurrentPose)
+
 
         self.Running = True
         print("Ready!")
@@ -136,6 +141,59 @@ class RobotController:
             else:
                 print("Failed...")
                 print("")
+
+
+    def MoveSpline(self, X_Y_Z_Phi_ListArray, mode=1):
+
+        req = MoveSplineTaskRequest()
+        req.pos = []
+        for XYZPhi in X_Y_Z_Phi_ListArray:
+            fma = Float64MultiArray()
+            dim = MultiArrayDimension()
+            dim.label = "pose"
+            dim.size = 6
+            dim.stride = 6
+            fma.layout.dim = [dim]
+            fma.layout.data_offset = 0
+            x,y,z,phi = XYZPhi
+            fma.data = [x, y, z, 0, 0, phi]
+            req.pos.append(fma)
+
+        req.posCnt = len(req.pos)
+        req.acc = [50.0, 50.0]
+        req.vel = [50.0, 50.0]
+        req.time = 0.0
+        req.ref = 0
+        req.mode = mode # Abs:0, Rel:1
+        req.opt = 0
+        req.syncType = 0
+
+        if self.Running:
+            print("Moving...")
+            results = self.Function_MoveSpline(req)
+            if results.success == True:
+                self.Function_MoveWait()
+                print("Done!")
+                print("")
+            else:
+                print("Failed...")
+                print("")
+
+
+
+    def SplineTrajectory(self, Rel_Move):
+        Pose = self.Function_GetPose(1)
+        pos_abs = Pose.pos[:3]
+        Points = np.zeros([len(Rel_Move)+1,3], float)
+        Points[0] = pos_abs
+
+        for i in range(len(Rel_Move)):
+            Points[i+1] = Points[i] + Rel_Move[i]
+
+        X_Y_Z_Phi_ListArray = SplineTrajectory(Points)
+
+        self.MoveSpline(X_Y_Z_Phi_ListArray, mode=0)
+
 
 
 
@@ -233,6 +291,7 @@ if __name__ == "__main__":
                    'HomePose':RC.Move_Home,
                    'InitPose':RC.Init_Pose,
                    'SetTcp':RC.SetTCP,
+                   'MoveSpline':RC.MoveSpline
                    }
 
     code.interact(banner=banner, local=locals_dict)
