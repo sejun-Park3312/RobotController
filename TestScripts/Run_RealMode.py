@@ -31,18 +31,6 @@ RC.launcher_name = Gazebo.launcher_name
 RC.launcher_model = Gazebo.launcher_model
 RC.Ready()
 
-banner = "\n Waiting Your Order..."
-locals_dict = {"RC": RC,
-               'MoveJoint': RC.Move_Joint,
-               'MoveRel': RC.Move_Rel,
-               'MoveAbs': RC.Move_Abs,
-               'GetPose': RC.Get_Pose,
-               'GetJoint': RC.Get_Joint,
-               'HomePose': RC.Move_Home,
-               'InitPose': RC.Init_Pose,
-               'SetTcp': RC.SetTCP,
-               }
-
-code.interact(banner=banner, local=locals_dict)
+RC.Controller()
 
 RC.EndController()

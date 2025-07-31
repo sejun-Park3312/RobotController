@@ -6,6 +6,7 @@ import subprocess
 import code
 from dsr_msgs.srv import MoveLine, MoveJoint, MoveHome, MoveWait, Fkin, Ikin
 from dsr_msgs.srv import GetCurrentPose, SetCurrentTcp, ConfigCreateTcp, GetCurrentTcp, ConfigDeleteTcp
+from dsr_msgs.srv import SetRobotMode
 
 
 class RobotController:
@@ -46,9 +47,11 @@ class RobotController:
         self.Function_MoveLine = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_line', MoveLine)
         self.Function_MoveJoint = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_joint', MoveJoint)
         self.Function_GetPose = rospy.ServiceProxy('/dsr01' + modelName + '/system/get_current_pose', GetCurrentPose)
-        self.Function_CreatTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/config_create_tcp', ConfigCreateTcp)
+        self.Function_CreateTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/config_create_tcp', ConfigCreateTcp)
         self.Function_SetTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/set_current_tcp', SetCurrentTcp)
         self.Function_GetTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/get_current_tcp', GetCurrentTcp)
+        self.Function_DeletTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/config_delete_tcp', ConfigDeleteTcp)
+        self.Function_SetRobotMode = rospy.ServiceProxy('/dsr01' + modelName + '/system/set_robot_mode', SetRobotMode)
 
         self.Running = True
         print("Ready!")
@@ -162,7 +165,11 @@ class RobotController:
         print("")
         return Pose.pos
 
-
+    def Wait(self, Time_sec):
+        print("Sleeping...")
+        rospy.sleep(Time_sec)
+        print("Waked up!")
+        print("")
 
     def Track_EE(self):
         print("Tracking...")
@@ -177,12 +184,12 @@ class RobotController:
         print("")
 
 
-
+    # Manual Mode에서 가능
     def SetTCP(self, TCPName = "SJ_TCP", TCP_OFFSET = None):
         if TCP_OFFSET == None:
             TCP_OFFSET = self.TCP_Offset
 
-        Result1 = self.Function_CreatTCP(TCPName, TCP_OFFSET)
+        Result1 = self.Function_CreateTCP(TCPName, TCP_OFFSET)
         Result2 = self.Function_SetTCP(TCPName)
         Result3 = self.Function_GetTCP()
 
@@ -192,7 +199,7 @@ class RobotController:
             print(f"Current TCP Pose: {TCP_OFFSET}")
             print("")
         else:
-            print("TCP Setting Failed!")
+            print("TCP Setting Failed.. Check Robot Mode")
             print("")
 
 
@@ -204,15 +211,75 @@ class RobotController:
             print("TCP Deleting Done!")
             print("")
         else:
-            print("TCP Deleting Failed!")
+            print("TCP Setting Failed.. Check Robot Mode")
             print("")
 
 
-    def Fkin(self, q):
-        Function_Fkin = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/motion/fkin', Fkin)
-        Result = Function_Fkin(pos=q, ref=2)
-        Pose = Result.conv_posx
-        return Pose
+    def SetRobotMode(self, ManualMode = False):
+        if ManualMode == True:
+            Result = self.Function_SetRobotMode(1)
+        else:
+            Result = self.Function_SetRobotMode(0)
+
+        if Result.success == True:
+            if ManualMode == False:
+                print("Auto Mode On!")
+                print("")
+            else:
+                print("Manual Mode On!")
+                print("")
+
+
+
+    def GetTCP(self):
+
+        Result = self.Function_GetTCP()
+
+        if Result.success == True:
+            print("TCP Name: " + Result.info)
+            print("")
+        else:
+            print("TCP Setting Failed.. ")
+            print("")
+
+
+
+
+    def DeletTCP(self, TCPName = None):
+
+        if TCPName == None:
+            TCPName = self.Function_GetTCP()
+
+        Result = self.Function_DeletTCP(TCPName.info)
+        if Result.success == True:
+            print("TCP Named " + TCPName.info + " Deleted!")
+            print("")
+        else:
+            print("TCP Setting Failed.. Check Robot Mode")
+            print("")
+
+
+
+
+    def Controller(self):
+        banner = "\n Waiting Your Order..."
+        locals_dict = {"RC": self,
+                       'MoveJoint': self.Move_Joint,
+                       'MoveRel': self.Move_Rel,
+                       'MoveAbs': self.Move_Abs,
+                       'GetPose': self.Get_Pose,
+                       'GetJoint': self.Get_Joint,
+                       'HomePose': self.Move_Home,
+                       'InitPose': self.Init_Pose,
+                       'SetTcp': self.SetTCP,
+                       "GetTcp": self.GetTCP,
+                       "DeletTcp": self.DeletTCP,
+                       "SetRobotMode": self.SetRobotMode,
+                       'Wait': self.Wait}
+
+        code.interact(banner=banner, local=locals_dict)
+
+        self.EndController()
 
 
     def EndController(self):
@@ -238,7 +305,10 @@ if __name__ == "__main__":
                    'HomePose':RC.Move_Home,
                    'InitPose':RC.Init_Pose,
                    'SetTcp':RC.SetTCP,
-                   }
+                   "GetTcp": RC.GetTCP,
+                   "DeletTcp": RC.DeletTCP,
+                   "SetRobotMode": RC.SetRobotMode,
+                   'Wait': RC.Wait}
 
     code.interact(banner=banner, local=locals_dict)
 
