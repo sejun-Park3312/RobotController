@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from reportlab.lib.pagesizes import elevenSeventeen
 
 import rospy
 import threading
@@ -28,8 +29,8 @@ class RobotController:
         self.EE_Position = None
         self.EE_Rotation = None
 
-        self.Velocity = [50, 20]
-        self.Acceleration = [30, 20]
+        self.Velocity = [20, 20]
+        self.Acceleration = [20, 20]
         self.InitJoint = [11.859779357910156, -0.6888203024864197, 99.6191177368164, -1.7431619358347097e-15, 81.0697021484375, 11.859779357910159]
         self.InitPose = [350/1000, 73.5/1000, 383.5/1000, 0]
 
@@ -156,16 +157,20 @@ class RobotController:
             fma.layout.dim = [dim]
             fma.layout.data_offset = 0
             x,y,z,phi = XYZPhi
-            fma.data = [x, y, z, 0, 0, phi]
+            if mode == 1:
+                fma.data = [x, y, z, 0, 0, phi]
+            else:
+                fma.data = []
+
             req.pos.append(fma)
 
         req.posCnt = len(req.pos)
-        req.acc = [50.0, 50.0]
-        req.vel = [50.0, 50.0]
+        req.acc = [10.0,  0.0]
+        req.vel = [10.0, 0.0]
         req.time = 0.0
         req.ref = 0
         req.mode = mode # Abs:0, Rel:1
-        req.opt = 0
+        req.opt = 1
         req.syncType = 0
 
         if self.Running:
@@ -190,10 +195,12 @@ class RobotController:
         for i in range(len(Rel_Move)):
             Points[i+1] = Points[i] + Rel_Move[i]
 
-        X_Y_Z_Phi_ListArray = SplineTrajectory(Points)
+        X_Y_Z_Phi_ListArray = np.array(SplineTrajectory(Points))
+        rel_xyzphi = []
+        for i in range(len(X_Y_Z_Phi_ListArray)-1):
+            rel_xyzphi.append(list(X_Y_Z_Phi_ListArray[i+1] - X_Y_Z_Phi_ListArray[i]))
 
-        self.MoveSpline(X_Y_Z_Phi_ListArray, mode=0)
-
+        self.MoveSpline(rel_xyzphi)
 
 
 
