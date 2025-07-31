@@ -14,7 +14,7 @@ class RobotController:
         self.lock = threading.Lock()
         self.SamplingTime = 100/1000
         self.launcher_model = "a0509_custom"
-        self.TCP_Offset = [0,-34.5,-397.5,0,0,0]
+        self.TCP_Offset = [0,0,0,0,0,0]
 
         self.Function_MoveWait = None
         self.Function_MoveHome = None
@@ -46,6 +46,9 @@ class RobotController:
         self.Function_MoveLine = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_line', MoveLine)
         self.Function_MoveJoint = rospy.ServiceProxy('/dsr01' + modelName + '/motion/move_joint', MoveJoint)
         self.Function_GetPose = rospy.ServiceProxy('/dsr01' + modelName + '/system/get_current_pose', GetCurrentPose)
+        self.Function_CreatTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/config_create_tcp', ConfigCreateTcp)
+        self.Function_SetTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/set_current_tcp', SetCurrentTcp)
+        self.Function_GetTCP = rospy.ServiceProxy('/dsr01' + modelName + '/tcp/get_current_tcp', GetCurrentTcp)
 
         self.Running = True
         print("Ready!")
@@ -175,16 +178,18 @@ class RobotController:
 
 
 
-    def SetTCP(self):
-        CreatTCP = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/tcp/config_create_tcp', ConfigCreateTcp)
-        Result1 = CreatTCP(name="SJ_TCP", pos=self.TCP_Offset)
-        SetTCP = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/tcp/set_current_tcp', SetCurrentTcp)
-        Result2 = SetTCP(name="SJ_TCP")
-        GetTCP = rospy.ServiceProxy('/dsr01' + self.launcher_model + '/tcp/get_current_tcp', GetCurrentTcp)
-        Result3 = GetTCP()
+    def SetTCP(self, TCPName = "SJ_TCP", TCP_OFFSET = None):
+        if TCP_OFFSET == None:
+            TCP_OFFSET = self.TCP_Offset
+
+        Result1 = self.Function_CreatTCP(TCPName, TCP_OFFSET)
+        Result2 = self.Function_SetTCP(TCPName)
+        Result3 = self.Function_GetTCP()
+
         if Result1.success == True and Result2.success == True:
             print("TCP Setting Done!")
-            print("Current TCP Name:" + Result3.info)
+            print("Current TCP Name: " + Result3.info)
+            print("Current TCP Pose: " + TCPName)
             print("")
         else:
             print("TCP Setting Failed!")
