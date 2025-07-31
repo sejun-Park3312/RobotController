@@ -14,7 +14,7 @@ class RobotController:
         self.lock = threading.Lock()
         self.SamplingTime = 100/1000
         self.launcher_model = "a0509_custom"
-        self.TCP_Offset = [0,0,0,0,0,0]
+        self.TCP_Offset = [0,5,0,0,0,0]
 
         self.Function_MoveWait = None
         self.Function_MoveHome = None
@@ -189,7 +189,7 @@ class RobotController:
         if Result1.success == True and Result2.success == True:
             print("TCP Setting Done!")
             print("Current TCP Name: " + Result3.info)
-            print("Current TCP Pose: " + TCPName)
+            print(f"Current TCP Pose: {TCP_OFFSET}")
             print("")
         else:
             print("TCP Setting Failed!")
